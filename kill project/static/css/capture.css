@@ -1,0 +1,211 @@
+/* CSS: murder theme */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #0b0b0b;
+    color: #fff;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    width: 90%;
+    max-width: 800px;
+    padding: 20px;
+    background-color: #111;
+    border: 3px solid #900000;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #900000;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+header h1 {
+    font-size: 28px;
+    color: #ff3333;
+    display: flex;
+    align-items: center;
+}
+
+header h1 i {
+    margin-right: 10px;
+}
+
+.back-link {
+    color: #ff3333;
+    font-size: 16px;
+    text-decoration: none;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+.content {
+    display: flex;
+    justify-content: space-between;
+}
+
+.capture-panel {
+    flex: 0 0 60%;
+}
+
+.capture-panel h2 {
+    color: #ff3333;
+    font-size: 22px;
+    margin-bottom: 15px;
+}
+
+.capture-panel p {
+    color: #ccc;
+    margin-bottom: 20px;
+}
+
+.capture-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    font-size: 16px;
+    color: #ff3333;
+    margin-bottom: 5px;
+    display: block;
+}
+
+input[type="text"] {
+    padding: 10px;
+    border: 1px solid #900000;
+    border-radius: 5px;
+    background-color: #222;
+    color: #fff;
+    font-size: 16px;
+    width: 100%;
+}
+
+input[type="text"]:focus {
+    border-color: #ff3333;
+    outline: none;
+}
+
+small {
+    color: #ff6666;
+}
+
+button.capture-btn {
+    background-color: #900000;
+    color: #fff;
+    padding: 12px;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    transition: background 0.3s ease;
+}
+
+button.capture-btn:hover {
+    background-color: #ff3333;
+}
+
+button.capture-btn i {
+    margin-right: 8px;
+}
+
+.capture-info {
+    flex: 0 0 35%;
+    background-color: #222;
+    padding: 15px;
+    border-radius: 5px;
+    border: 2px solid #900000;
+}
+
+.capture-info h3 {
+    font-size: 20px;
+    color: #ff3333;
+    margin-bottom: 10px;
+}
+
+.capture-info ul {
+    list-style: none;
+    padding: 0;
+}
+
+.capture-info li {
+    font-size: 16px;
+    color: #ccc;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.capture-info li i {
+    color: #ff3333;
+    margin-right: 10px;
+}
+
+footer {
+    margin-top: 30px;
+    text-align: center;
+    color: #666;
+    font-size: 14px;
+    border-top: 2px solid #900000;
+    padding-top: 10px;
+}
+
+.flash-messages {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.flash-message {
+    background-color: #900000;
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.flash-message i {
+    margin-right: 10px;
+}
+
+.flash-message.success {
+    background-color: #008000;
+}
+
+.flash-message.warning {
+    background-color: #ffcc00;
+}
+
+.flash-message.danger {
+    background-color: #ff3333;
+}
+
+.close-btn {
+    margin-left: 15px;
+    cursor: pointer;
+    font-size: 16px;
+    color: #fff;
+}

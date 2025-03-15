@@ -1,0 +1,74 @@
+<!-- templates/capture.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capture Face - Security System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/capture.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-camera"></i> Face Capture</h1>
+            <a href="{{ url_for('index') }}" class="back-link"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+        </header>
+
+        <div class="content capture-content">
+            <div class="capture-panel">
+                <h2>Add a New Authorized User</h2>
+                <p>Enter the person's name and click "Start Capture" to begin taking photos.</p>
+                
+                <form action="{{ url_for('capture_face') }}" method="post" class="capture-form">
+                    <div class="form-group">
+                        <label for="name">Person's Name:</label>
+                        <input type="text" id="name" name="name" required placeholder="e.g. John_Smith">
+                        <small>Use underscore instead of spaces (e.g. John_Smith)</small>
+                    </div>
+                    <button type="submit" class="btn capture-btn">
+                        <i class="fas fa-camera"></i> Start Capture
+                    </button>
+                </form>
+            </div>
+
+            <div class="capture-info">
+                <h3>Instructions</h3>
+                <ul>
+                    <li><i class="fas fa-info-circle"></i> The system will take multiple photos of your face</li>
+                    <li><i class="fas fa-info-circle"></i> Look directly at the camera and ensure good lighting</li>
+                    <li><i class="fas fa-info-circle"></i> Try different angles and expressions for better recognition</li>
+                    <li><i class="fas fa-info-circle"></i> Wait for each photo to be captured before moving</li>
+                    <li><i class="fas fa-info-circle"></i> The process will take approximately 1 minute</li>
+                </ul>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2025 Face Recognition Security System</p>
+        </footer>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        <i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'danger' %}fa-exclamation-circle{% elif category == 'warning' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %}"></i>
+                        {{ message }}
+                        <span class="close-btn">&times;</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <script>
+        document.querySelectorAll('.close-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.parentElement.style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>

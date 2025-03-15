@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition Security System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-shield-alt"></i> Face Recognition Security System</h1>
+            <div class="system-status">
+                <span class="status-indicator {% if system_active %}active{% else %}inactive{% endif %}"></span>
+                <span class="status-text">System {% if system_active %}Active{% else %}Inactive{% endif %}</span>
+            </div>
+        </header>
+
+        <div class="content">
+            <div class="main-panel">
+                <div class="video-container">
+                    <div class="video-feed">
+                        {% if system_active %}
+                        <img src="{{ url_for('video_feed') }}" alt="Video Feed">
+                        {% else %}
+                        <div class="placeholder">
+                            <i class="fas fa-video-slash"></i>
+                            <p>System Inactive</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="door-status">
+                        <i class="fas {% if door_status == 'OPEN' %}fa-door-open{% else %}fa-door-closed{% endif %}"></i>
+                        <span>Door {{ door_status }}</span>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <div class="control-panel">
+                        <h2>System Controls</h2>
+                        <div class="control-buttons">
+                            <form action="{{ url_for('start_system') }}" method="post">
+                                <button type="submit" class="btn start-btn" {% if system_active %}disabled{% endif %}>
+                                    <i class="fas fa-play"></i> Start System
+                                </button>
+                            </form>
+                            <form action="{{ url_for('stop_system') }}" method="post">
+                                <button type="submit" class="btn stop-btn" {% if not system_active %}disabled{% endif %}>
+                                    <i class="fas fa-stop"></i> Stop System
+                                </button>
+                            </form>
+                            <a href="{{ url_for('capture_face') }}" class="btn capture-btn">
+                                <i class="fas fa-camera"></i> Capture Face
+                            </a>
+                        </div>
+
+                        <div class="threshold-control">
+                            <h3>Recognition Threshold</h3>
+                            <form action="{{ url_for('set_threshold') }}" method="post">
+                                <div class="form-group">
+                                    <input type="range" id="threshold" name="threshold" min="10" max="100" step="5" value="{{ confidence_threshold }}">
+                                    <span id="threshold-value">{{ confidence_threshold }}</span>
+                                </div>
+                                <div class="threshold-info">
+                                    <span>Strict</span>
+                                    <span>Lenient</span>
+                                </div>
+                                <button type="submit" class="btn threshold-btn">Apply</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="side-panel">
+                <div class="panel authorized-users">
+                    <h2><i class="fas fa-users"></i> Authorized Users</h2>
+                    <div class="user-list">
+                        {% if authorized_users %}
+                            {% for user in authorized_users %}
+                            <div class="user-item">
+                                <i class="fas fa-user-check"></i> {{ user }}
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="no-data">No authorized users found</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="panel detection-log">
+                    <h2><i class="fas fa-history"></i> Detection Log</h2>
+                    <div class="log-list">
+                        {% if detection_log %}
+                            {% for log in detection_log|reverse %}
+                            <div class="log-item {% if log.status == 'Unauthorized' %}unauthorized{% endif %}">
+                                <div class="log-time">{{ log.timestamp }}</div>
+                                <div class="log-name">
+                                    {% if log.status == 'Authorized' %}
+                                    <i class="fas fa-user-check"></i>
+                                    {% else %}
+                                    <i class="fas fa-user-times"></i>
+                                    {% endif %}
+                                    {{ log.name }}
+                                </div>
+                                <div class="log-confidence">{{ log.confidence }}</div>
+                                <div class="log-status">{{ log.status }}</div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="no-data">No detection records</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="panel system-info">
+                    <h2><i class="fas fa-info-circle"></i> System Info</h2>
+                    <div class="info-item">
+                        <span class="info-label">Status:</span>
+                        <span id="status-message">{{ status_message }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Last Detection:</span>
+                        <span id="last-detection">
+                            {% if detection_log %}
+                                {{ detection_log[-1].name }} ({{ detection_log[-1].timestamp }})
+                            {% else %}
+                                None
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2025 Face Recognition Security System</p>
+        </footer>
+    </div>
+
+    <!-- Audio element for alarm sound -->
+    <audio id="alarm-sound" src="{{ url_for('static', filename='alarm.mp3') }}" preload="auto"></audio>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        <i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'danger' %}fa-exclamation-circle{% elif category == 'warning' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %}"></i>
+                        {{ message }}
+                        <span class="close-btn">&times;</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <script>
+        // Update threshold value display
+        const thresholdInput = document.getElementById('threshold');
+        const thresholdValue = document.getElementById('threshold-value');
+        
+        if (thresholdInput) {
+            thresholdInput.addEventListener('input', function() {
+                thresholdValue.textContent = this.value;
+            });
+        }
+
+        // Close flash messages
+        document.querySelectorAll('.close-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.parentElement.style.display = 'none';
+            });
+        });
+
+        // Auto-hide flash messages after 5 seconds
+        setTimeout(() => {
+            document.querySelectorAll('.flash-message').forEach(msg => {
+                msg.style.opacity = '0';
+                setTimeout(() => {
+                    msg.style.display = 'none';
+                }, 500);
+            });
+        }, 5000);
+
+        // Periodically update system status
+        function updateSystemStatus() {
+            fetch('/get_system_status')
+                .then(response => response.json())
+                .then(data => {
+                    // Update door status
+                    const doorIcon = document.querySelector('.door-status i');
+                    const doorText = document.querySelector('.door-status span');
+                    
+                    if (doorIcon && doorText) {
+                        doorIcon.className = data.door_status === 'OPEN' ? 'fas fa-door-open' : 'fas fa-door-closed';
+                        doorText.textContent = 'Door ' + data.door_status;
+                    }
+
+                    // Update status message
+                    const statusMessage = document.getElementById('status-message');
+                    if (statusMessage) {
+                        statusMessage.textContent = data.status_message;
+                    }
+
+                    // Trigger alarm if an unauthorized person is detected
+                    const lastDetection = data.last_detection;
+                    if (lastDetection && lastDetection.name === 'Unknown') {
+                        playAlarm();
+                    }
+                })
+                .catch(error => console.error('Error fetching status:', error));
+        }
+
+        // Play alarm sound
+        function playAlarm() {
+            const alarmSound = document.getElementById('alarm-sound');
+            alarmSound.muted = false;  // Ensure sound is unmuted
+            alarmSound.play().catch(error => {
+                console.error('Error playing alarm:', error);
+                alert('Unable to play the alarm due to browser restrictions. Please click anywhere to allow the sound.');
+            });
+        }
+
+        // Update status every 3 seconds
+        setInterval(updateSystemStatus, 3000);
+    </script>
+</body>
+</html>

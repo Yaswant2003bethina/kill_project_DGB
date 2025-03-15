@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Capture - Security System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/do_capture.css') }}">
+    <style>
+        .image-preview img {
+            max-width: 100px;
+            margin: 5px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .image-preview img.selected {
+            border: 2px solid blue;
+        }
+        .edit-controls {
+            margin-top: 10px;
+        }
+        .edit-controls button {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-camera"></i> Face Capture Process</h1>
+            <a href="{{ url_for('index') }}" class="back-link"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+        </header>
+
+        <div class="content capture-content">
+            <div class="capture-process">
+                <h2>Capturing Face for: <span id="person-name">{{ name }}</span></h2>
+
+                <div class="form-group">
+                    <label for="image-count">Number of Images to Capture:</label>
+                    <input type="number" id="image-count" min="1" value="1">
+                </div>
+
+                <div class="video-container">
+                    <video id="video" width="640" height="480" autoplay></video>
+                    <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+                </div>
+                
+                <div class="image-preview" id="image-preview"></div>
+
+                <!-- Edit Controls -->
+                <div class="edit-controls" id="edit-controls" style="display:none;">
+                    <button id="rotate-btn"><i class="fas fa-sync-alt"></i> Rotate</button>
+                    <button id="crop-btn"><i class="fas fa-crop"></i> Crop</button>
+                    <button id="reset-btn"><i class="fas fa-undo"></i> Reset</button>
+                </div>
+
+                <div class="capture-controls">
+                    <button id="start-btn" class="btn start-btn"><i class="fas fa-play"></i> Start Capture</button>
+                    <button id="save-btn" class="btn save-btn" style="display:none;"><i class="fas fa-save"></i> Save All Images</button>
+                    <button id="cancel-btn" class="btn cancel-btn"><i class="fas fa-times"></i> Cancel</button>
+                </div>
+
+                <div id="status-messages" class="status-messages"></div>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2025 Face Recognition Security System</p>
+        </footer>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const startBtn = document.getElementById('start-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const personName = "{{ name }}";
+        const imageCountInput = document.getElementById('image-count');
+        const imagePreviewContainer = document.getElementById('image-preview');
+        const editControls = document.getElementById('edit-controls');
+        const rotateBtn = document.getElementById('rotate-btn');
+        const cropBtn = document.getElementById('crop-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        let captureCount = 0;
+        let totalImages = 1;
+        let capturedImages = [];
+        let selectedImageIndex = -1;
+
+        // Initialize camera
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (err) {
+                alert('Failed to access camera: ' + err.message);
+            }
+        }
+
+        // Capture all images first and display them
+        function captureAllImages() {
+            totalImages = parseInt(imageCountInput.value, 10);
+            capturedImages = [];
+            captureCount = 0;
+            imagePreviewContainer.innerHTML = "";  // Clear any previous images
+            captureNextImage();
+        }
+
+        // Capture the next image
+        function captureNextImage() {
+            if (captureCount < totalImages) {
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                // Convert canvas to data URL for preview
+                const captureData = canvas.toDataURL('image/png');
+                capturedImages.push(captureData);
+
+                // Show the image in the preview grid
+                const imgElement = document.createElement('img');
+                imgElement.src = captureData;
+                imgElement.addEventListener('click', () => selectImage(captureCount));
+                imagePreviewContainer.appendChild(imgElement);
+
+                captureCount++;
+                
+                // Capture next image after a short delay
+                setTimeout(captureNextImage, 1000);
+            } else {
+                saveBtn.style.display = 'inline-block';
+            }
+        }
+
+        // Select an image for editing
+        function selectImage(index) {
+            selectedImageIndex = index;
+            const images = imagePreviewContainer.querySelectorAll('img');
+            images.forEach((img, i) => {
+                img.classList.toggle('selected', i === index);
+            });
+            editControls.style.display = 'block';
+        }
+
+        // Rotate the selected image by 90 degrees
+        rotateBtn.addEventListener('click', () => {
+            if (selectedImageIndex !== -1) {
+                const img = new Image();
+                img.src = capturedImages[selectedImageIndex];
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = img.height;
+                    canvas.height = img.width;
+                    context.translate(canvas.width / 2, canvas.height / 2);
+                    context.rotate(Math.PI / 2);
+                    context.drawImage(img, -img.width / 2, -img.height / 2);
+                    capturedImages[selectedImageIndex] = canvas.toDataURL('image/png');
+                    updateImagePreview(selectedImageIndex, capturedImages[selectedImageIndex]);
+                };
+            }
+        });
+
+        // Crop the selected image to half its size
+        cropBtn.addEventListener('click', () => {
+            if (selectedImageIndex !== -1) {
+                const img = new Image();
+                img.src = capturedImages[selectedImageIndex];
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = img.width / 2;
+                    canvas.height = img.height / 2;
+                    context.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvas.width, canvas.height);
+                    capturedImages[selectedImageIndex] = canvas.toDataURL('image/png');
+                    updateImagePreview(selectedImageIndex, capturedImages[selectedImageIndex]);
+                };
+            }
+        });
+
+        // Reset the selected image to its original state
+        resetBtn.addEventListener('click', () => {
+            if (selectedImageIndex !== -1) {
+                const img = new Image();
+                img.src = capturedImages[selectedImageIndex];
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    context.drawImage(img, 0, 0);
+                    capturedImages[selectedImageIndex] = canvas.toDataURL('image/png');
+                    updateImagePreview(selectedImageIndex, capturedImages[selectedImageIndex]);
+                };
+            }
+        });
+
+        // Update the image preview
+        function updateImagePreview(index, newSrc) {
+            const images = imagePreviewContainer.querySelectorAll('img');
+            images[index].src = newSrc;
+            images[index].classList.add('selected'); // Keep the selected state
+        }
+
+        // Save all captured images to the server
+        function saveAllImages() {
+            let savedCount = 0;
+            
+            capturedImages.forEach((captureData, index) => {
+                fetch('/process_capture', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name: personName, image: captureData }),
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          savedCount++;
+                          if (savedCount === capturedImages.length) {
+                              alert('All images saved successfully.');
+                          }
+                      } else {
+                          alert('Failed to save image: ' + data.message);
+                      }
+                  });
+            });
+        }
+
+        startBtn.addEventListener('click', captureAllImages);
+        saveBtn.addEventListener('click', saveAllImages);
+        window.addEventListener('load', initCamera);
+    </script>
+</body>
+</html>
